@@ -32,6 +32,10 @@ options:
   api_token:
     description:
      - DigitalOcean api token.
+  api_baseurl:
+    description:
+     - DigitalOcean api baseurl.
+    default: "https://api.digitalocean.com/v2"
   id:
     description:
      - Numeric, the droplet id you want to operate on.
@@ -325,10 +329,10 @@ class Response(object):
 
 class Rest(object):
 
-    def __init__(self, module, headers):
+    def __init__(self, module, headers, baseurl):
         self.module = module
         self.headers = headers
-        self.baseurl = 'https://api.digitalocean.com/v2'
+        self.baseurl = baseurl
 
     def _url_builder(self, path):
         if path[0] == '/':
@@ -364,9 +368,11 @@ class DODroplet(object):
 
     def __init__(self, module):
         api_token = module.params['api_token']
+        api_baseurl = module.params['api_baseurl']
         self.module = module
         self.rest = Rest(module, {'Authorization': 'Bearer {}'.format(api_token),
-                         'Content-type': 'application/json'})
+                         'Content-type': 'application/json'},
+                         api_baseurl)
 
     def get_key_or_fail(self, k):
         v = self.module.params[k]
@@ -547,6 +553,7 @@ def main():
                 fallback=(env_fallback, ['DO_API_TOKEN', 'DO_API_KEY']),
                 required=True
             ),
+            api_baseurl=dict(type='str', default="https://api.digitalocean.com/v2"),
             name=dict(type='str'),
             size=dict(aliases=['size_id']),
             image=dict(aliases=['image_id']),
